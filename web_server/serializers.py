@@ -30,7 +30,7 @@ class SearchSerializer(serializers.ModelSerializer):
         fields = ['id', 'csv_url', 'user', 'web_site', 'bet_data']
 
 
-class SettingsSearializer(serializers.ModelSerializer):
+class SettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Settings
         fields = ['goldbet_research', 'bwin_research']

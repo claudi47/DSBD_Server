@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from pytz import utc
 from rest_framework import status
 from rest_framework.decorators import api_view
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from web_server.models import Search, BetData, User, Settings
@@ -26,17 +27,20 @@ def rollback_function(search_id):
 
 @api_view(['POST'])  # returns a decorator that transforms the function in a APIView REST class
 def bet_data_view(request):
-    user_identifier = request.data['user_id']
-    username = request.data['username']
-    web_site = request.data['web_site']
+    user_identifier = request.data.get('user_id')
+    username = request.data.get('username')
+    web_site = request.data.get('web_site')
     try:
-        user = UserSerializer(data={'username': username, 'user_identifier': user_identifier})
-        if user.is_valid():  # verifies if the user is already created
-            user.save()
+        # Check if the user exists. If not, create a new one after the data validation!
+        if not User.objects.filter(pk=user_identifier).exists():
+            user = UserSerializer(data={'username': username, 'user_identifier': user_identifier})
+            # 'raise_exception', if set True, raises a Validation Error exception in case of invalid data!
+            if user.is_valid(raise_exception=True):  # verifies if the user is already created
+                user.save()
 
         csv_url = ''
         search = SearchSerializer(data={'csv_url': csv_url, 'user': user_identifier, 'web_site': web_site})
-        if search.is_valid():
+        if search.is_valid(raise_exception=True):
             search_instance = search.save()
             # Adds the given job to the job list and wakes up the scheduler if it's already running.
             # Initiating relaxed compensating transaction (after 20 seconds)
@@ -55,14 +59,8 @@ def bet_data_view(request):
             for element in bet_data_list:
                 # **element passes the entire content of the dictionary where bet_data are present
                 bet_data = BetDataSerializer(data={**element, 'search': search_instance.pk})
-                if bet_data.is_valid():
+                if bet_data.is_valid(raise_exception=True):
                     bet_data.save()
-                else:
-                    try:
-                        # The 'reschedule_job' function will automatically resume the rollback job!
-                        transaction_scheduler.reschedule_job(str(search_instance.pk), trigger='date')
-                    finally:
-                        return Response('Error!', status=status.HTTP_400_BAD_REQUEST)
 
             response_from_cpp = requests.post("http://localhost:3000", json=bet_data_list)
             if not response_from_cpp.ok:
@@ -76,6 +74,14 @@ def bet_data_view(request):
                 transaction_scheduler.reschedule_job(job_id=str(search_instance.pk), trigger='date',
                                                      run_date=datetime.datetime.now() + datetime.timedelta(seconds=5))
                 return Response(associated_search_data, status=status.HTTP_200_OK)
+
+    except ValidationError:
+        try:
+            search_instance.pk
+            transaction_scheduler.reschedule_job(job_id=str(search_instance.pk), trigger='date')
+        except:
+            pass
+        raise
     except Exception as ex:
         try:
             search_instance.pk
@@ -112,7 +118,7 @@ def stats_view(request):
             stat_from_cpp = requests.get("http://localhost:3000/stats?stat=1")
             if not stat_from_cpp.ok:
                 return Response('Bad Response from CPP', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            return HttpResponse(stat_from_cpp.text, status=status.HTTP_200_OK,content_type="application/json")
+            return HttpResponse(stat_from_cpp.text, status=status.HTTP_200_OK, content_type="application/json")
         case "2":
             stat_from_cpp = requests.get("http://localhost:3000/stats?stat=2")
             if not stat_from_cpp.ok:
@@ -139,7 +145,8 @@ def settings_view(request):
         def transaction_to_repeat():
             if settings_serializer.data['max_researches'] is not None:
                 if settings_serializer.data['bool_for_all'] is True:
-                    User.objects.filter(username__isnull=False).update(max_research=settings_serializer.data['max_researches'])
+                    User.objects.filter(username__isnull=False).update(
+                        max_research=settings_serializer.data['max_researches'])
 
                 elif settings_serializer.data['username_research'] is not None:
                     User.objects.filter(username=settings_serializer.data['username_research']).update(
@@ -168,6 +175,7 @@ def settings_view(request):
             updated_settings.goldbet_research = settings_serializer.data['bool_toggle_goldbet']
             updated_settings.bwin_research = settings_serializer.data['bool_toggle_bwin']
             updated_settings.save()
+
         try:
             transaction_to_repeat()
             return Response('Success!')
@@ -175,6 +183,7 @@ def settings_view(request):
             return Response('Transaction error!', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
         return Response(settings_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET'])
 def validation_view(request):
