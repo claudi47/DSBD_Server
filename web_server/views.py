@@ -62,15 +62,15 @@ def bet_data_view(request):
                 if bet_data.is_valid(raise_exception=True):
                     bet_data.save()
 
-            response_from_cpp = requests.post("http://localhost:3000", json=bet_data_list)
-            if not response_from_cpp.ok:
+            response_parsing_module = requests.post("http://localhost:8500/parsing", json=bet_data_list)
+            if not response_parsing_module.ok:
                 try:
                     # The 'reschedule_job' function will automatically resume the rollback job!
                     transaction_scheduler.reschedule_job(str(search_instance.pk), trigger='date')
                 finally:
                     return Response('Error!', status=status.HTTP_400_BAD_REQUEST)
             else:
-                associated_search_data = {'search_id': search_instance.pk, 'filename': response_from_cpp.text}
+                associated_search_data = {'search_id': search_instance.pk, 'filename': response_parsing_module.text}
                 transaction_scheduler.reschedule_job(job_id=str(search_instance.pk), trigger='date',
                                                      run_date=datetime.datetime.now() + datetime.timedelta(seconds=5))
                 return Response(associated_search_data, status=status.HTTP_200_OK)
@@ -115,25 +115,25 @@ def url_csv_view(request):
 def stats_view(request):
     match request.query_params['stat']:
         case "1":
-            stat_from_cpp = requests.get("http://localhost:3000/stats?stat=1")
-            if not stat_from_cpp.ok:
-                return Response('Bad Response from CPP', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            return HttpResponse(stat_from_cpp.text, status=status.HTTP_200_OK, content_type="application/json")
+            stat_from_module = requests.get("http://localhost:8500/stats?stat=1")
+            if not stat_from_module.ok:
+                return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return HttpResponse(stat_from_module.text, status=status.HTTP_200_OK, content_type="application/json")
         case "2":
-            stat_from_cpp = requests.get("http://localhost:3000/stats?stat=2")
-            if not stat_from_cpp.ok:
-                return Response('Bad Response from CPP', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            return HttpResponse(stat_from_cpp.text, status=status.HTTP_200_OK, content_type="application/json")
+            stat_from_module = requests.get("http://localhost:8500/stats?stat=2")
+            if not stat_from_module.ok:
+                return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return HttpResponse(stat_from_module.text, status=status.HTTP_200_OK, content_type="application/json")
         case "3":
-            stat_from_cpp = requests.get("http://localhost:3000/stats?stat=3")
-            if not stat_from_cpp.ok:
-                return Response('Bad Response from CPP', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            return HttpResponse(stat_from_cpp.text, status=status.HTTP_200_OK, content_type="application/json")
+            stat_from_module = requests.get("http://localhost:8500/stats?stat=3")
+            if not stat_from_module.ok:
+                return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return HttpResponse(stat_from_module.text, status=status.HTTP_200_OK, content_type="application/json")
         case "4":
-            stat_from_cpp = requests.get("http://localhost:3000/stats?stat=4")
-            if not stat_from_cpp.ok:
-                return Response('Bad Response from CPP', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            return HttpResponse(stat_from_cpp.text, status=status.HTTP_200_OK, content_type="application/json")
+            stat_from_module = requests.get("http://localhost:8500/stats?stat=4")
+            if not stat_from_module.ok:
+                return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return HttpResponse(stat_from_module.text, status=status.HTTP_200_OK, content_type="application/json")
     return Response("wow", status=status.HTTP_400_BAD_REQUEST)
 
 
