@@ -11,7 +11,6 @@ from rest_framework.response import Response
 
 from web_server.models import Search, BetData, User, Settings
 from web_server.serializers import UserSerializer, SearchSerializer, BetDataSerializer, SettingsDataSerializer
-from web_server.setting_category import GENERAL
 from web_server.transaction_scheduler import transaction_scheduler, repeat_deco
 
 
@@ -118,71 +117,46 @@ def stats_view(request):
             stat_from_module = requests.get("http://localhost:8500/stats?stat=1")
             if not stat_from_module.ok:
                 return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            return HttpResponse(stat_from_module.text, status=status.HTTP_200_OK, content_type="application/json")
+            return HttpResponse(stat_from_module.text, content_type="application/json")
         case "2":
             stat_from_module = requests.get("http://localhost:8500/stats?stat=2")
             if not stat_from_module.ok:
                 return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            return HttpResponse(stat_from_module.text, status=status.HTTP_200_OK, content_type="application/json")
+            return HttpResponse(stat_from_module.text, content_type="text/plain")
         case "3":
             stat_from_module = requests.get("http://localhost:8500/stats?stat=3")
             if not stat_from_module.ok:
                 return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            return HttpResponse(stat_from_module.text, status=status.HTTP_200_OK, content_type="application/json")
+            return HttpResponse(stat_from_module.text, content_type="application/json")
         case "4":
             stat_from_module = requests.get("http://localhost:8500/stats?stat=4")
             if not stat_from_module.ok:
                 return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            return HttpResponse(stat_from_module.text, status=status.HTTP_200_OK, content_type="application/json")
+            return HttpResponse(stat_from_module.text, content_type="application/json")
     return Response("wow", status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
 def settings_view(request):
-    settings_serializer = SettingsDataSerializer(data=request.data)
-    if settings_serializer.is_valid():
-        @repeat_deco(3)
-        def transaction_to_repeat():
-            if settings_serializer.data['max_researches'] is not None:
-                if settings_serializer.data['bool_for_all'] is True:
-                    User.objects.filter(username__isnull=False).update(
-                        max_research=settings_serializer.data['max_researches'])
-
-                elif settings_serializer.data['username_research'] is not None:
-                    User.objects.filter(username=settings_serializer.data['username_research']).update(
-                        max_research=settings_serializer.data['max_researches'])
-            if settings_serializer.data['user_suspended'] is not None:
-                updated_user = User.objects.get(username=settings_serializer.data['user_suspended'])
-                if updated_user is None:
-                    return Response('This user doesn\'t exist!', status=status.HTTP_400_BAD_REQUEST)
-                if settings_serializer.data['perma_ban'] is True:
-                    updated_user.ban_period = datetime.datetime.max
-                    updated_user.save()
-                else:
-                    updated_user.ban_period = None
-                    updated_user.save()
-            if settings_serializer.data['period_of_suspension'] is not None and settings_serializer.data[
-                'user_suspended'] is not None:
-                updated_user = User.objects.get(username=settings_serializer.data['user_suspended'])
-                if updated_user is None:
-                    return Response('This user doesn\'t exist!', status=status.HTTP_400_BAD_REQUEST)
-                updated_user.ban_period = settings_serializer.data['period_of_suspension']
-                updated_user.save()
-
-            updated_settings = Settings.objects.get(pk=GENERAL)
-            if updated_settings is None:
-                return Response('Settings not found!', status=status.HTTP_400_BAD_REQUEST)
-            updated_settings.goldbet_research = settings_serializer.data['bool_toggle_goldbet']
-            updated_settings.bwin_research = settings_serializer.data['bool_toggle_bwin']
-            updated_settings.save()
-
-        try:
-            transaction_to_repeat()
-            return Response('Success!')
-        except:
-            return Response('Transaction error!', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    else:
-        return Response(settings_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        match request.query_params['setting']:
+            case 'ban':
+                response = requests.post('http://localhost:8500/ban', json=request.data)
+                if not response.ok:
+                    return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response('Ok', status=status.HTTP_200_OK)
+            case 'max_r':
+                response = requests.post('http://localhost:8500/researches', json=request.data)
+                if not response.ok:
+                    return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response('Ok', status=status.HTTP_200_OK)
+            case 'toggle':
+                response = requests.post('http://localhost:8500/toggle', json=request.data)
+                if not response.ok:
+                    return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response('Ok', status=status.HTTP_200_OK)
+    except KeyError:
+        return Response('BaD qUeRy PaRaMs', status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
