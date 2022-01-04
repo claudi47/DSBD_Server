@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -63,13 +64,12 @@ WSGI_APPLICATION = 'DSBD_Server.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
         'NAME': 'db_dsbd',
         'CLIENT': {
-            'host': 'mongodb+srv://claudi47:ciaoatutti@cluster0.hj3kc.mongodb.net/db_dsbd?retryWrites=true&w=majority',
+            'host': f'mongodb://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_URL")}:{os.getenv("DB_PORT")}',
         }
     },
     'alternative': {
