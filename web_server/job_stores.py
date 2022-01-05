@@ -1,5 +1,8 @@
+import os
+
 from apscheduler.jobstores.mongodb import MongoDBJobStore
 
 job_stores = {
-    'default': MongoDBJobStore(host=f'mongodb+srv://lauralex:coccode@apldb.hhz9g.mongodb.net/db_apl?retryWrites=true&w=majority')
+    'default': MongoDBJobStore(host=f'mongodb://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}'
+                                    f'@{os.getenv("DB_URL")}:{os.getenv("DB_PORT")}/')
 }

@@ -61,7 +61,7 @@ def bet_data_view(request):
                 if bet_data.is_valid(raise_exception=True):
                     bet_data.save()
 
-            response_parsing_module = requests.post("http://localhost:8500/parsing", json=bet_data_list)
+            response_parsing_module = requests.post("http://stats_settings:8500/parsing", json=bet_data_list)
             if not response_parsing_module.ok:
                 try:
                     # The 'reschedule_job' function will automatically resume the rollback job!
@@ -114,22 +114,22 @@ def url_csv_view(request):
 def stats_view(request):
     match request.query_params['stat']:
         case "1":
-            stat_from_module = requests.get("http://localhost:8500/stats?stat=1")
+            stat_from_module = requests.get("http://stats_settings:8500/stats?stat=1")
             if not stat_from_module.ok:
                 return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             return HttpResponse(stat_from_module.text, content_type="application/json")
         case "2":
-            stat_from_module = requests.get("http://localhost:8500/stats?stat=2")
+            stat_from_module = requests.get("http://stats_settings:8500/stats?stat=2")
             if not stat_from_module.ok:
                 return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             return HttpResponse(stat_from_module.text, content_type="text/plain")
         case "3":
-            stat_from_module = requests.get("http://localhost:8500/stats?stat=3")
+            stat_from_module = requests.get("http://stats_settings:8500/stats?stat=3")
             if not stat_from_module.ok:
                 return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             return HttpResponse(stat_from_module.text, content_type="application/json")
         case "4":
-            stat_from_module = requests.get("http://localhost:8500/stats?stat=4")
+            stat_from_module = requests.get("http://stats_settings:8500/stats?stat=4")
             if not stat_from_module.ok:
                 return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             return HttpResponse(stat_from_module.text, content_type="application/json")
@@ -141,17 +141,17 @@ def settings_view(request):
     try:
         match request.query_params['setting']:
             case 'ban':
-                response = requests.post('http://localhost:8500/ban', json=request.data)
+                response = requests.post('http://stats_settings:8500/ban', json=request.data)
                 if not response.ok:
                     return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 return Response('Ok', status=status.HTTP_200_OK)
             case 'max_r':
-                response = requests.post('http://localhost:8500/researches', json=request.data)
+                response = requests.post('http://stats_settings:8500/researches', json=request.data)
                 if not response.ok:
                     return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 return Response('Ok', status=status.HTTP_200_OK)
             case 'toggle':
-                response = requests.post('http://localhost:8500/toggle', json=request.data)
+                response = requests.post('http://stats_settings:8500/toggle', json=request.data)
                 if not response.ok:
                     return Response('Bad Response', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 return Response('Ok', status=status.HTTP_200_OK)

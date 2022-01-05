@@ -14,7 +14,7 @@ SECRET_KEY = 'django-insecure-yvjg)zj!s%y*d@_(vk-m@g38padrnrvk&wj@^7tu7pnu-n#rsx
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -67,9 +67,10 @@ WSGI_APPLICATION = 'DSBD_Server.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
-        'NAME': 'db_dsbd',
+        'NAME': os.getenv("DB_DATABASE"),
         'CLIENT': {
-            'host': f'mongodb://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_URL")}:{os.getenv("DB_PORT")}',
+            'host': f'mongodb://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_URL")}:{os.getenv("DB_PORT")}'
+                    f'/{os.getenv("DB_DATABASE")}',
         }
     },
     'alternative': {
