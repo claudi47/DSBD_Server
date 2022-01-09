@@ -69,7 +69,23 @@ DATABASES = {
         'ENGINE': 'djongo',
         'NAME': os.getenv("DB_DATABASE"),
         'CLIENT': {
-            'host': f'mongodb://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@{os.getenv("DB_URL")}:{os.getenv("DB_PORT")}'
+            'host': f'mongodb://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@mongo_parser:{os.getenv("DB_PORT")}'
+                    f'/{os.getenv("DB_DATABASE")}',
+        }
+    },
+    'betdata': {
+        'ENGINE': 'djongo',
+        'NAME': os.getenv("DB_DATABASE"),
+        'CLIENT': {
+            'host': f'mongodb://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@mongo_betData:{os.getenv("DB_PORT")}'
+                    f'/{os.getenv("DB_DATABASE")}',
+        }
+    },
+    'parser': {
+        'ENGINE': 'djongo',
+        'NAME': os.getenv("DB_DATABASE"),
+        'CLIENT': {
+            'host': f'mongodb://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}@mongo_parser:{os.getenv("DB_PORT")}'
                     f'/{os.getenv("DB_DATABASE")}',
         }
     },
@@ -79,6 +95,7 @@ DATABASES = {
     }
 }
 
+DATABASE_ROUTERS = ['web_server.db_router.DistributedRouter']
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators

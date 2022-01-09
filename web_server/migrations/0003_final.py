@@ -1,7 +1,9 @@
 from django.db import migrations, models
 
 
-def create_settings(apps, _):
+def create_settings(apps, schema_editor):
+    if schema_editor.connection.alias != 'parser':
+        return
     settings = apps.get_model("web_server", "Settings")
     settings.objects.create(goldbet_research=True, bwin_research=True)
 

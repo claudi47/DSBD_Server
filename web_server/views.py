@@ -12,6 +12,20 @@ from web_server.models import User, Settings
 # In Django, a view determines the content of a web page
 # views.py is where we handle the request/response logic of our web server
 
+@api_view(['POST'])
+def bet_data_view(request):
+    bet_data_response = requests.post("http://bet_data_service/betdata/", json=request.data)
+    if not bet_data_response.ok:
+        return Response('Bad response from betdata', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return HttpResponse(bet_data_response.text, content_type="application/json")
+
+@api_view(['POST'])
+def url_csv_view(request):
+    url_csv_response = requests.post("http://bet_data_service/csv/", json=request.data)
+    if not url_csv_response.ok:
+        return Response('Bad response from csv', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return HttpResponse(url_csv_response.text, content_type="application/json")
+
 @api_view(['GET'])
 def stats_view(request):
     match request.query_params['stat']:
